@@ -57,6 +57,42 @@ def print_exception_details(exception: Exception):
         colored_print(Fore.BRIGHT_CYAN + element + Fore.WHITE)
 
 
+def print_exception_details_full_traceback(exception: Exception):
+    """Print detailed information about an exception including full traceback."""
+    tb = exception.__traceback__
+    tb_summary = traceback.extract_tb(tb)
+
+    colored_print(
+        f"{Fore.BRIGHT_RED}Full Traceback (most recent call last):{Fore.WHITE}"
+    )
+    for frame in tb_summary:
+        filepath = frame.filename
+        line = frame.lineno
+        functionname = frame.name
+        code = frame.line.strip() if frame.line else "<no code available>"
+
+        colored_print(
+            f"\n{Fore.WHITE}In function {Fore.BRIGHT_RED}{functionname}{Fore.WHITE}"
+        )
+        colored_print(f"\tFilepath: \n\t\t{Fore.MAGENTA}{filepath}{Fore.WHITE}")
+        colored_print(f"\tLine:\n\t\t{Fore.BRIGHT_YELLOW}{line}{Fore.WHITE}")
+        colored_print(f"\tCode:\n\t\t{Fore.BRIGHT_BLUE}{code}{Fore.WHITE}")
+
+    # Exception type and message
+    exception_type = type(exception).__name__
+    exception_message = str(exception).strip() or "<Kein Text verfügbar>"
+
+    colored_print(
+        f"{Fore.WHITE}\tSpecies:\n\t\t{Fore.BRIGHT_RED}{exception_type}{Fore.WHITE}"
+    )
+    colored_print(f"\tMessage:")
+    wrapper = textwrap.TextWrapper(
+        width=200, initial_indent="\t\t", subsequent_indent="\t\t"
+    )
+    for line in wrapper.wrap(exception_message):
+        colored_print(Fore.BRIGHT_CYAN + line + Fore.WHITE)
+
+
 def get_exception_details_dict(exception: Exception):
     """Get the exception details as a dictionary.\n
     Usage:\n
@@ -104,6 +140,40 @@ def get_exception_details_dict(exception: Exception):
         "message": e_str,
     }
     return details
+
+
+def get_exception_details_dict_full_traceback(exception: Exception):
+    """Get the full traceback exception details as a dictionary list.
+
+    Returns:
+        List[dict]: One dictionary per traceback level.
+    """
+    tb = exception.__traceback__
+    tb_summary = traceback.extract_tb(tb)
+    results = []
+
+    for frame in tb_summary:
+        filepath = frame.filename
+        line = frame.lineno
+        functionname = frame.name
+        code = frame.line.strip() if frame.line else "<no code available>"
+
+        results.append(
+            {
+                "function": functionname,
+                "path": filepath,
+                "line": line,
+                "code": code,
+            }
+        )
+
+    exception_type = type(exception).__name__
+    exception_message = str(exception).strip() or "<Kein Text verfügbar>"
+
+    results[-1]["species"] = exception_type
+    results[-1]["message"] = exception_message
+
+    return results
 
 
 def get_exception_details_str(exception: Exception, colored: bool = True):
@@ -179,3 +249,49 @@ def get_exception_details_str(exception: Exception, colored: bool = True):
             fehler_str += "\n"
 
     return fehler_str
+
+
+def get_exception_details_str_full_traceback(
+    exception: Exception, colored: bool = True
+):
+    """Return the full traceback as a formatted string."""
+
+    tb = exception.__traceback__
+    tb_summary = traceback.extract_tb(tb)
+
+    if colored:
+        flr = Fore.BRIGHT_RED
+        fw = Fore.WHITE
+        fm = Fore.MAGENTA
+        fly = Fore.BRIGHT_YELLOW
+        flb = Fore.BRIGHT_BLUE
+        flc = Fore.BRIGHT_CYAN
+    else:
+        flr = fw = fm = fly = flb = flc = ""
+
+    fehler_str = f"{flr}Full Traceback (most recent call last):{fw}\n"
+
+    for frame in tb_summary:
+        filepath = frame.filename
+        line = frame.lineno
+        functionname = frame.name
+        code = frame.line.strip() if frame.line else "<no code available>"
+
+        fehler_str += f"\nIn function {flr}{functionname}{fw}\n"
+        fehler_str += f"\tFilepath: \n\t\t{fm}{filepath}{fw}\n"
+        fehler_str += f"\tLine:\n\t\t{fly}{line}{fw}\n"
+        fehler_str += f"\tCode:\n\t\t{flb}{code}{fw}\n"
+
+    exception_type = type(exception).__name__
+    exception_message = str(exception).strip() or "<Kein Text verfügbar>"
+
+    fehler_str += f"\tSpecies:\n\t\t{flr}{exception_type}{fw}\n"
+    fehler_str += f"\tMessage:\n"
+
+    wrapper = textwrap.TextWrapper(
+        width=200, initial_indent="\t\t", subsequent_indent="\t\t"
+    )
+    for line in wrapper.wrap(exception_message):
+        fehler_str += flc + line + fw + "\n"
+
+    return fehler_str.strip()
